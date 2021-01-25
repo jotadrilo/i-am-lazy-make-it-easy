@@ -1,10 +1,4 @@
 # Spacemacs
-[submodule "spacemacs-emacs/.emacs.d"]
-	path = dotfiles/spacemacs-emacs/.emacs.d
-	url = https://github.com/syl20bnr/spacemacs
-	branch = master
-
-# Oh my Zsh
 [submodule "oh-my-zsh/.oh-my-zsh"]
 	path = dotfiles/oh-my-zsh/.oh-my-zsh
 	url = https://github.com/robbyrussell/oh-my-zsh
