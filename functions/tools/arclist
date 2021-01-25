@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# The Phabricator URL is extracted from the .arcrc file
+phab="https://phabricator.example.com"
+arcrc="${HOME}/.arcrc"
+if [[ -f "$arcrc" ]]; then
+    if command -v jq >/dev/null; then
+        phab=$(jq -r .config.default "$arcrc")
+    else
+        phab=$(grep url "$arcrc" | cut -d\" -f4)
+    fi
+    phab="${phab%/}"
+fi
+
+# arclist adds URLs to the default output of `arc list` (requires arcanist tools)
+script -q /dev/null arc list | sed -E "s;D([0-9]+):; ${phab}/D\1 ;g"

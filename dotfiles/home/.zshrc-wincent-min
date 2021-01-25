@@ -1,0 +1,168 @@
+# shellcheck disable=SC2148
+
+# Make completion:
+# - Case-insensitive.
+# - Accept abbreviations after . or _ or - (ie. f.b -> foo.bar).
+# - Substring complete (ie. bar -> foobar).
+zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+
+# Colorize completions using default `ls` colors.
+zstyle ':completion:*' list-colors ''
+
+# Loaded by zplug
+autoload -U colors
+colors
+
+function +vi-hg-bookmarks() {
+  emulate -L zsh
+  if [[ -n "${hook_com[hg-active-bookmark]}" ]]; then
+    hook_com[hg-bookmark-string]="${(Mj:,:)@}"
+    ret=1
+  fi
+}
+
+function +vi-hg-message() {
+  emulate -L zsh
+
+  # Suppress hg branch display if we can display a bookmark instead.
+  if [[ -n "${hook_com[misc]}" ]]; then
+    hook_com[branch]=''
+  fi
+  return 0
+}
+
+setopt PROMPT_SUBST
+
+#
+# History
+#
+
+export HISTSIZE=100000
+export HISTFILE="$HOME/.zsh_history"
+export SAVEHIST=$HISTSIZE
+
+#
+# Options
+#
+
+setopt autocd               # .. is shortcut for cd .. (etc)
+setopt autoparamslash       # tab completing directory appends a slash
+setopt autopushd            # cd automatically pushes old dir onto dir stack
+setopt clobber              # allow clobbering with >, no need to use >!
+setopt noflowcontrol        # disable start (C-s) and stop (C-q) characters
+setopt nonomatch            # unmatched patterns are left unchanged
+setopt histignorealldups    # filter duplicates from history
+setopt histignorespace      # don't record commands starting with a space
+setopt histverify           # confirm history expansion (!$, !!, !foo)
+setopt ignoreeof            # prevent accidental C-d from exiting shell
+setopt interactivecomments  # allow comments, even in interactive shells
+# setopt printexitvalue       # for non-zero exit status
+setopt pushdignoredups      # don't push multiple copies of same dir onto stack
+setopt pushdsilent          # don't print dir stack after pushing/popping
+setopt sharehistory         # share history across shells
+
+# Tab Auto-completion
+unsetopt menu_complete
+setopt auto_menu
+setopt complete_in_word
+setopt always_to_end
+
+#
+# Bindings
+#
+
+bindkey -e # emacs bindings, set to -v for vi bindings
+
+autoload history-search-end
+zle -N history-beginning-search-backward-end history-search-end
+zle -N history-beginning-search-forward-end history-search-end
+bindkey "\e[A" history-beginning-search-backward-end  # cursor up
+bindkey "\e[B" history-beginning-search-forward-end   # cursor down
+
+autoload -U select-word-style
+select-word-style bash # only alphanumeric chars are considered WORDCHARS
+
+autoload -U edit-command-line
+zle -N edit-command-line
+bindkey '^x^e' edit-command-line
+
+bindkey ' ' magic-space # do history expansion on space
+
+# Replace standard history-incremental-search-{backward,forward} bindings.
+# These are the same but permit patterns (eg. a*b) to be used.
+bindkey "^r" history-incremental-pattern-search-backward
+bindkey "^s" history-incremental-pattern-search-forward
+
+# Make CTRL-Z background things and unbackground them.
+function fg-bg() {
+  if [[ $#BUFFER -eq 0 ]]; then
+    fg
+  else
+    zle push-input
+  fi
+}
+zle -N fg-bg
+bindkey '^Z' fg-bg
+
+#
+# Other
+#
+
+zsh_optional_files=(
+    ~/.zsh/aliases
+    ~/.zsh/common
+    ~/.zsh/colors
+    ~/.zsh/exports
+    ~/.zsh/functions
+    ~/.zsh/path
+    ~/.zsh/vars
+    ~/.zsh/common.private
+    ~/.zsh/functions.private
+)
+
+for f in ${optional_files[*]}; do
+    test -f "$f" && source "$f"
+done
+
+
+#
+# Hooks
+#
+
+autoload -U add-zsh-hook
+
+function set-tab-and-window-title() {
+  emulate -L zsh
+  local CMD="${1:gs/$/\\$}"
+  print -Pn "\e]0;$CMD:q\a"
+}
+
+function update-window-title-precmd() {
+  emulate -L zsh
+  set-tab-and-window-title "$(basename "$PWD")"
+}
+add-zsh-hook precmd update-window-title-precmd
+
+function auto-ls-after-cd() {
+  emulate -L zsh
+  # Only in response to a user-initiated `cd`, not indirectly (eg. via another
+  # function).
+  if [ "$ZSH_EVAL_CONTEXT" = "toplevel:shfunc" ]; then
+    if [[ "$OSTYPE" = darwin* ]] ; then
+      ls -Ga
+    else
+      ls -a
+    fi
+  fi
+}
+add-zsh-hook chpwd auto-ls-after-cd
+
+# adds `cdr` command for navigating to recent directories
+autoload -Uz chpwd_recent_dirs cdr add-zsh-hook
+add-zsh-hook chpwd chpwd_recent_dirs
+
+# enable menu-style completion for cdr
+zstyle ':completion:*:*:*:*:*' menu selection
+
+# fall through to cd if cdr is passed a non-recent dir as an argument
+zstyle ':chpwd:*' recent-dirs-default true

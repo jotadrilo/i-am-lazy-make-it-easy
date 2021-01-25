@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+# get a profile key from the credentials file
+key=$1
+profile=${2:-$AWS_PROFILE}
+: ${key?"Usage: $0 <profile> <key>"}
+: ${profile?"Usage: $0 <profile> <key>"}
+cat ~/.aws/credentials | grep $profile -A2 | grep $key | awk '{print $3}'
+

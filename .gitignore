@@ -1,0 +1,5 @@
+# Git secrets
+.gitsecret/keys/random_seed
+
+# Encrypted files
+*/enc/*

@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# The gitlist URL can be configured in a ~/.gitlistrc file
+#
+# {
+#   "url": "https://gitlist.domain.org"
+# }
+#
+gitlist="https://gitlist.example.com"
+gitlistrc="${HOME}/.gitlistrc"
+if [[ -f "$gitlistrc" ]]; then
+    if command -v jq >/dev/null; then
+        gitlist=$(jq -r .url "$gitlistrc")
+    else
+        gitlist=$(grep url ~/.gitlistrc | cut -d\" -f4)
+    fi
+fi
+
+error() {
+    echo "error: $*"
+    exit 1
+}
+
+root=$(git rev-parse --show-toplevel 2>/dev/null)
+if [[ ! -d "$root" ]]; then
+    error "$PWD is not a Git repository."
+fi
+repo=$(basename "$root")
+
+: ${1:?"requires a file/folder as argument"}
+path=$(realpath "$1")
+relpath="${path#"${root}/"}"
+
+if [[ -f "$path" ]]; then
+    echo "${gitlist}/${repo}/blob/master/${relpath}"
+fi
+if [[ -d "$path" ]]; then
+    echo "${gitlist}/${repo}/tree/master/${relpath}/"
+fi

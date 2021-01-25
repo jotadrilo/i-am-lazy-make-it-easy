@@ -1,0 +1,32 @@
+# This is Git's per-user configuration file.
+[user]
+  name = Joseda Rios
+  email = jdrios@vmware.com
+  signingkey = 80622F198858811B
+
+[includeIf "gitdir:~/projects/"]
+  path = ~/projects/.gitconfig
+
+[core]
+  editor = vim
+
+[alias]
+  logline = log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  stl = rev-parse --show-toplevel
+
+[commit]
+  gpgsign = true
+
+[tag]
+  gpgsign = true
+
+[gpg]
+  program = gpg
+
+[url "git@github.com:"]
+  insteadOf = https://github.com/
+
+[reset]
+  quiet = true
+[pull]
+	rebase = true

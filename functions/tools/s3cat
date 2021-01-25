@@ -1,0 +1,5 @@
+#!/bin/bash -e
+
+# cat a s3 file
+s3cmd get --quiet $1 -
+

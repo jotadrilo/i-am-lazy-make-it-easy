@@ -1,0 +1,3 @@
+#!/bin/bash
+
+yq -y -s 'sort_by("\(.kind)/\(.metadata.name)")| .[]'
